@@ -12,7 +12,7 @@ struct Coords
 {
     int x, y;
 
-    bool operator==(const Coords& other)
+    bool operator==(const Coords &other)
     {
         return x == other.x and y == other.y;
     }
@@ -26,7 +26,7 @@ struct Segment
 struct Triangle
 {
     Coords p1, p2, p3;
-    bool complet=false;
+    bool complet = false;
 };
 
 struct Application
@@ -69,14 +69,13 @@ void drawTriangles(SDL_Renderer *renderer, const std::vector<Triangle> &triangle
 {
     for (std::size_t i = 0; i < triangles.size(); i++)
     {
-        const Triangle& t = triangles[i];
+        const Triangle &t = triangles[i];
         trigonRGBA(
             renderer,
             t.p1.x, t.p1.y,
             t.p2.x, t.p2.y,
             t.p3.x, t.p3.y,
-            0, 240, 160, SDL_ALPHA_OPAQUE
-        );
+            0, 240, 160, SDL_ALPHA_OPAQUE);
     }
 }
 
@@ -97,8 +96,7 @@ void draw(SDL_Renderer *renderer, const Application &app)
 bool CircumCircle(
     float pX, float pY,
     float x1, float y1, float x2, float y2, float x3, float y3,
-    float *xc, float *yc, float *rsqr
-)
+    float *xc, float *yc, float *rsqr)
 {
     float m1, m2, mx1, mx2, my1, my2;
     float dx, dy, drsqr;
@@ -157,7 +155,34 @@ bool CircumCircle(
 
 void construitVoronoi(Application &app)
 {
-    
+    // Trier les points selon x
+    std::sort(app.points.begin(), app.points.end(), compareCoords);
+
+    // Vider la liste existante de triangles
+    app.triangles.pop_back();
+
+    // Créer un trés grand triangle (-1000, -1000); (500, 3000); (1500, -1000)
+    Triangle bigTriangle = {(-1000, -1000), (500, 3000), (1500, -1000)};
+
+    // Le rajouter à la liste de triangles déjà créés
+    app.triangles.push_back(bigTriangle);
+
+    // Pour chaque point P du repère:
+    for (size_t i = 0; i < app.points.size(); i++)
+    {
+        // Créer une liste de segments LS
+        std::vector<Segment> listeSegments;
+
+        for (size_t j = 0; j < app.triangles.size(); j++)
+        {
+            // TODO:
+            //  tester si le cercle circonscrit contient le point P
+            // bool isCircum = CircumCircle(app.points[i].x, app.points[i].x, app.triangles[j].p1.x);
+            // if(isCurcum) {
+
+            // }
+        }
+    }
 }
 
 bool handleEvent(Application &app)
