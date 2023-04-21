@@ -175,12 +175,28 @@ void construitVoronoi(Application &app)
 
         for (size_t j = 0; j < app.triangles.size(); j++)
         {
-            // TODO:
-            //  tester si le cercle circonscrit contient le point P
-            // bool isCircum = CircumCircle(app.points[i].x, app.points[i].x, app.triangles[j].p1.x);
-            // if(isCurcum) {
+            //  Tester si le cercle circonscrit contient le point P
+            float *xc, *yc, *rsqr;
+            bool isCircum = CircumCircle(
+                app.points[i].x,
+                app.points[i].y,
+                app.triangles[j].p1.x,
+                app.triangles[j].p1.y,
+                app.triangles[j].p2.x,
+                app.triangles[j].p2.y,
+                app.triangles[j].p3.x,
+                app.triangles[j].p3.y,
+                xc,
+                yc,
+                rsqr);
 
-            // }
+            if (isCircum)
+            {
+                // Récupérer les différents segments de ce triangles dans LS
+                // TODO
+                // Enlever le triangke T de la liste
+                // TODO
+            }
         }
     }
 }
