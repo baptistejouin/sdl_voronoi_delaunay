@@ -208,11 +208,31 @@ void construitVoronoi(Application &app)
             // Pour chaque segment S de la liste LS faire
             for (size_t j = 0; j < listeSegments.size(); j++)
             {
-                if (listeSegments[j + 1].p1.x)
-                    break;
-                if ((listeSegments[j].p1 == listeSegments[j + 1].p2) && (listeSegments[j].p2 == listeSegments[j + 1].p1))
+                for (size_t k = 0; k < listeSegments.size(); k++)
                 {
+                    if (k == j)
+                        break;
+
+                    // Si un segment est un doublon d’un autre alors
+                    if ((listeSegments[j].p1 == listeSegments[k].p2) && (listeSegments[j].p2 == listeSegments[k].p1))
+                    {
+                        // Le virer
+                        listeSegments.erase(listeSegments.begin() + k);
+                    }
                 }
+            }
+
+            // Pour chaque segment S de la liste LS faire
+            for (size_t j = 0; j < listeSegments.size(); j++)
+            {
+                // Créer un nouveau triangle composé du segment S et du point P;
+                Triangle triangle = {
+                    listeSegments[j].p1,
+                    listeSegments[j].p2,
+                    {app.points[i].x,
+                     app.points[i].y}};
+
+                app.triangles.push_back(triangle);
             }
         }
     }
