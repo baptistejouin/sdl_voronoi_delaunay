@@ -193,9 +193,26 @@ void construitVoronoi(Application &app)
             if (isCircum)
             {
                 // Récupérer les différents segments de ce triangles dans LS
-                // TODO
+                Segment seg_1 = {{app.triangles[j].p1.x, app.triangles[j].p1.y}, {app.triangles[j].p2.x, app.triangles[j].p2.y}};
+                Segment seg_2 = {{app.triangles[j].p2.x, app.triangles[j].p2.y}, {app.triangles[j].p3.x, app.triangles[j].p3.y}};
+                Segment seg_3 = {{app.triangles[j].p3.x, app.triangles[j].p3.y}, {app.triangles[j].p1.x, app.triangles[j].p1.y}};
+
+                listeSegments.push_back(seg_1);
+                listeSegments.push_back(seg_2);
+                listeSegments.push_back(seg_3);
+
                 // Enlever le triangke T de la liste
-                // TODO
+                app.triangles.erase(app.triangles.begin() + j);
+            }
+
+            // Pour chaque segment S de la liste LS faire
+            for (size_t j = 0; j < listeSegments.size(); j++)
+            {
+                if (listeSegments[j + 1].p1.x)
+                    break;
+                if ((listeSegments[j].p1 == listeSegments[j + 1].p2) && (listeSegments[j].p2 == listeSegments[j + 1].p1))
+                {
+                }
             }
         }
     }
