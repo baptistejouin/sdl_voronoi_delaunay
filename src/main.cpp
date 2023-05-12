@@ -38,6 +38,11 @@ struct Application
     std::vector<Triangle> triangles;
 };
 
+struct Color
+{
+    float r, g, b, a;
+};
+
 bool compareCoords(Coords point1, Coords point2)
 {
     if (point1.y == point2.y)
@@ -45,15 +50,15 @@ bool compareCoords(Coords point1, Coords point2)
     return point1.y < point2.y;
 }
 
-void drawPoints(SDL_Renderer *renderer, const std::vector<Coords> &points)
+void drawPoints(SDL_Renderer *renderer, const std::vector<Coords> &points, Color color)
 {
     for (std::size_t i = 0; i < points.size(); i++)
     {
-        filledCircleRGBA(renderer, points[i].x, points[i].y, 3, 240, 240, 23, SDL_ALPHA_OPAQUE);
+        filledCircleRGBA(renderer, points[i].x, points[i].y, 3, color.r, color.g, color.b, color.a);
     }
 }
 
-void drawSegments(SDL_Renderer *renderer, const std::vector<Segment> &segments)
+void drawSegments(SDL_Renderer *renderer, const std::vector<Segment> &segments, Color color)
 {
     for (std::size_t i = 0; i < segments.size(); i++)
     {
@@ -61,11 +66,11 @@ void drawSegments(SDL_Renderer *renderer, const std::vector<Segment> &segments)
             renderer,
             segments[i].p1.x, segments[i].p1.y,
             segments[i].p2.x, segments[i].p2.y,
-            240, 240, 20, SDL_ALPHA_OPAQUE);
+            color.r, color.g, color.b, color.a);
     }
 }
 
-void drawTriangles(SDL_Renderer *renderer, const std::vector<Triangle> &triangles)
+void drawTriangles(SDL_Renderer *renderer, const std::vector<Triangle> &triangles, Color color)
 {
     for (std::size_t i = 0; i < triangles.size(); i++)
     {
@@ -75,7 +80,7 @@ void drawTriangles(SDL_Renderer *renderer, const std::vector<Triangle> &triangle
             t.p1.x, t.p1.y,
             t.p2.x, t.p2.y,
             t.p3.x, t.p3.y,
-            0, 240, 160, SDL_ALPHA_OPAQUE);
+            color.r, color.g, color.b, color.a);
     }
 }
 
@@ -85,8 +90,12 @@ void draw(SDL_Renderer *renderer, const Application &app)
     int width, height;
     SDL_GetRendererOutputSize(renderer, &width, &height);
 
-    drawPoints(renderer, app.points);
-    drawTriangles(renderer, app.triangles);
+    Color color_delaunay_points = {240, 240, 23, SDL_ALPHA_OPAQUE};
+    Color color_delaunay_segments = {240, 240, 20, SDL_ALPHA_OPAQUE};
+    Color color_delaunay_triangles = {0, 240, 160, SDL_ALPHA_OPAQUE};
+
+    drawPoints(renderer, app.points, color_delaunay_points);
+    drawTriangles(renderer, app.triangles, color_delaunay_triangles);
 }
 
 /*
@@ -206,6 +215,7 @@ void construitVoronoi(Application &app)
                 j--;
             }
         }
+
         // Pour chaque segment S de la liste LS faire
         for (size_t j = 0; j < listeSegments.size(); j++)
         {
