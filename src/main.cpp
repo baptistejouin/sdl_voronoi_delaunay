@@ -159,10 +159,10 @@ void construitVoronoi(Application &app)
     std::sort(app.points.begin(), app.points.end(), compareCoords);
 
     // Vider la liste existante de triangles
-    app.triangles.pop_back();
+    app.triangles.clear();
 
     // Créer un trés grand triangle (-1000, -1000); (500, 3000); (1500, -1000)
-    Triangle bigTriangle = {(-1000, -1000), (500, 3000), (1500, -1000)};
+    Triangle bigTriangle = {{-1000, -1000}, {500, 3000}, {1500, -1000}};
 
     // Le rajouter à la liste de triangles déjà créés
     app.triangles.push_back(bigTriangle);
@@ -176,7 +176,7 @@ void construitVoronoi(Application &app)
         for (size_t j = 0; j < app.triangles.size(); j++)
         {
             //  Tester si le cercle circonscrit contient le point P
-            float *xc, *yc, *rsqr;
+            float xc, yc, rsqr;
             bool isCircum = CircumCircle(
                 app.points[i].x,
                 app.points[i].y,
@@ -186,9 +186,9 @@ void construitVoronoi(Application &app)
                 app.triangles[j].p2.y,
                 app.triangles[j].p3.x,
                 app.triangles[j].p3.y,
-                xc,
-                yc,
-                rsqr);
+                &xc,
+                &yc,
+                &rsqr);
 
             if (isCircum)
             {
@@ -203,37 +203,38 @@ void construitVoronoi(Application &app)
 
                 // Enlever le triangke T de la liste
                 app.triangles.erase(app.triangles.begin() + j);
+                j--;
             }
-
-            // Pour chaque segment S de la liste LS faire
-            for (size_t j = 0; j < listeSegments.size(); j++)
+        }
+        // Pour chaque segment S de la liste LS faire
+        for (size_t j = 0; j < listeSegments.size(); j++)
+        {
+            for (size_t k = 0; k < listeSegments.size(); k++)
             {
-                for (size_t k = 0; k < listeSegments.size(); k++)
-                {
-                    if (k == j)
-                        break;
+                if (k == j)
+                    break;
 
-                    // Si un segment est un doublon d’un autre alors
-                    if ((listeSegments[j].p1 == listeSegments[k].p2) && (listeSegments[j].p2 == listeSegments[k].p1))
-                    {
-                        // Le virer
-                        listeSegments.erase(listeSegments.begin() + k);
-                    }
+                // Si un segment est un doublon d’un autre alors
+                if ((listeSegments[j].p1 == listeSegments[k].p2) && (listeSegments[j].p2 == listeSegments[k].p1))
+                {
+                    // Le virer
+                    listeSegments.erase(listeSegments.begin() + k);
+                    k--;
                 }
             }
+        }
 
-            // Pour chaque segment S de la liste LS faire
-            for (size_t j = 0; j < listeSegments.size(); j++)
-            {
-                // Créer un nouveau triangle composé du segment S et du point P;
-                Triangle triangle = {
-                    listeSegments[j].p1,
-                    listeSegments[j].p2,
-                    {app.points[i].x,
-                     app.points[i].y}};
+        // Pour chaque segment S de la liste LS faire
+        for (size_t j = 0; j < listeSegments.size(); j++)
+        {
+            // Créer un nouveau triangle composé du segment S et du point P;
+            Triangle triangle = {
+                listeSegments[j].p1,
+                listeSegments[j].p2,
+                {app.points[i].x,
+                 app.points[i].y}};
 
-                app.triangles.push_back(triangle);
-            }
+            app.triangles.push_back(triangle);
         }
     }
 }
