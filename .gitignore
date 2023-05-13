@@ -6,3 +6,5 @@ SDL2
 .DS_Store
 CMakeCache.txt
 CMakeFiles/
+cmake_install.cmake
+Makefile

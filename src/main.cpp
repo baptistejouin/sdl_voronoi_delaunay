@@ -227,9 +227,11 @@ void construitVoronoi(Application &app)
                 // Si un segment est un doublon d’un autre alors
                 if ((listeSegments[j].p1 == listeSegments[k].p2) && (listeSegments[j].p2 == listeSegments[k].p1))
                 {
-                    // Le virer
+                    // Les virers
                     listeSegments.erase(listeSegments.begin() + k);
                     k--;
+                    j--;
+                    listeSegments.erase(listeSegments.begin() + j);
                 }
             }
         }
