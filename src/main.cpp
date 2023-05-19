@@ -18,6 +18,16 @@ struct Coords
     }
 };
 
+struct Coordsf
+{
+    float x, y;
+
+    bool operator==(const Coords &other)
+    {
+        return x == other.x and y == other.y;
+    }
+};
+
 struct Segment
 {
     Coords p1, p2;
@@ -29,6 +39,17 @@ struct Triangle
     bool complet = false;
 };
 
+struct Circle
+{
+    Coordsf center;
+    float radius;
+};
+
+struct Polygon
+{
+    std::vector<Coords> points;
+};
+
 struct Application
 {
     int width, height;
@@ -36,6 +57,8 @@ struct Application
 
     std::vector<Coords> points;
     std::vector<Triangle> triangles;
+    std::vector<Circle> circles;
+    std::vector<Polygon> polygon;
 };
 
 struct Color
@@ -84,6 +107,45 @@ void drawTriangles(SDL_Renderer *renderer, const std::vector<Triangle> &triangle
     }
 }
 
+void drawCircles(SDL_Renderer *renderer, const std::vector<Circle> &circles, Color color)
+{
+    for (std::size_t i = 0; i < circles.size(); i++)
+    {
+        const Circle &c = circles[i];
+
+        // draw circle of circum of triangle
+
+        // circleRGBA(
+        //     renderer,
+        //     c.center.x, c.center.y,
+        //     c.radius,
+        //     color.r, color.g, color.b, color.a);
+
+        // draw center of the circle
+        filledCircleRGBA(renderer, c.center.x, c.center.y, 3, 255, 0, 0, 255);
+    }
+}
+
+void drawPolygon(SDL_Renderer *renderer, const std::vector<Polygon> &polygones, Color color)
+{
+    const size_t numPoints = polygones.size();
+    for (size_t i = 0; i < numPoints; i++)
+    {
+        const Polygon &p = polygones[i];
+        const size_t numPoints = p.points.size();
+        for (size_t j = 0; j < numPoints; j++)
+        {
+            const Coords &p1 = p.points[j];
+            const Coords &p2 = p.points[(j + 1) % numPoints];
+            lineRGBA(
+                renderer,
+                p1.x, p1.y,
+                p2.x, p2.y,
+                color.r, color.g, color.b, color.a);
+        }
+    }
+}
+
 void draw(SDL_Renderer *renderer, const Application &app)
 {
     /* Remplissez cette fonction pour faire l'affichage du jeu */
@@ -96,6 +158,8 @@ void draw(SDL_Renderer *renderer, const Application &app)
 
     drawPoints(renderer, app.points, color_delaunay_points);
     drawTriangles(renderer, app.triangles, color_delaunay_triangles);
+    drawCircles(renderer, app.circles, color_delaunay_segments);
+    drawPolygon(renderer, app.polygon, color_delaunay_segments);
 }
 
 /*
@@ -169,6 +233,8 @@ void construitVoronoi(Application &app)
 
     // Vider la liste existante de triangles
     app.triangles.clear();
+    app.circles.clear();
+    app.polygon.clear();
 
     // Créer un trés grand triangle (-1000, -1000); (500, 3000); (1500, -1000)
     Triangle bigTriangle = {{-1000, -1000}, {500, 3000}, {1500, -1000}};
@@ -181,11 +247,14 @@ void construitVoronoi(Application &app)
     {
         // Créer une liste de segments LS
         std::vector<Segment> listeSegments;
+        std::vector<Polygon> listePolygones;
+        Polygon polygon;
 
         for (size_t j = 0; j < app.triangles.size(); j++)
         {
             //  Tester si le cercle circonscrit contient le point P
             float xc, yc, rsqr;
+
             bool isCircum = CircumCircle(
                 app.points[i].x,
                 app.points[i].y,
@@ -198,6 +267,13 @@ void construitVoronoi(Application &app)
                 &xc,
                 &yc,
                 &rsqr);
+
+            // draw circle of circum
+            Circle circle = {{xc, yc}, sqrt(rsqr)};
+            app.circles.push_back(circle);
+
+            polygon.points.push_back({(int)xc, (int)yc});
+            app.polygon.push_back(polygon);
 
             if (isCircum)
             {
@@ -257,7 +333,7 @@ bool handleEvent(Application &app)
     SDL_Event e;
     while (SDL_PollEvent(&e))
     {
-        if (e.type == SDL_QUIT)
+        if (e.type == SDL_QUIT || e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)
             return false;
         else if (e.type == SDL_WINDOWEVENT_RESIZED)
         {
