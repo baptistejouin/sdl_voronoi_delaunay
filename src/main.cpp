@@ -45,9 +45,9 @@ struct Circle
     float radius;
 };
 
-struct Polygon
+struct VoronoiEdge
 {
-    std::vector<Coords> points;
+    Coords p1, p2; // Les points extrémités de l'arête
 };
 
 struct Application
@@ -58,7 +58,7 @@ struct Application
     std::vector<Coords> points;
     std::vector<Triangle> triangles;
     std::vector<Circle> circles;
-    std::vector<Polygon> polygon;
+    std::vector<VoronoiEdge> voronoiEdges;
 };
 
 struct Color
@@ -126,24 +126,21 @@ void drawCircles(SDL_Renderer *renderer, const std::vector<Circle> &circles, Col
     }
 }
 
-void drawPolygon(SDL_Renderer *renderer, const std::vector<Polygon> &polygones, Color color)
+void drawVoronoiEdges(SDL_Renderer *renderer, const std::vector<VoronoiEdge> &edges, Color color)
 {
-    const size_t numPoints = polygones.size();
-    for (size_t i = 0; i < numPoints; i++)
+    if (edges.size() < 3)
+        return;
+
+    std::vector<Sint16> pointsX(edges.size());
+    std::vector<Sint16> pointsY(edges.size());
+
+    for (size_t i = 0; i < edges.size(); i++)
     {
-        const Polygon &p = polygones[i];
-        const size_t numPoints = p.points.size();
-        for (size_t j = 0; j < numPoints; j++)
-        {
-            const Coords &p1 = p.points[j];
-            const Coords &p2 = p.points[(j + 1) % numPoints];
-            lineRGBA(
-                renderer,
-                p1.x, p1.y,
-                p2.x, p2.y,
-                color.r, color.g, color.b, color.a);
-        }
+        pointsX[i] = static_cast<Sint16>(edges[i].p1.x);
+        pointsY[i] = static_cast<Sint16>(edges[i].p1.y);
     }
+
+    polygonRGBA(renderer, pointsX.data(), pointsY.data(), edges.size(), color.r, color.g, color.b, color.a);
 }
 
 void draw(SDL_Renderer *renderer, const Application &app)
@@ -159,7 +156,7 @@ void draw(SDL_Renderer *renderer, const Application &app)
     drawPoints(renderer, app.points, color_delaunay_points);
     drawTriangles(renderer, app.triangles, color_delaunay_triangles);
     drawCircles(renderer, app.circles, color_delaunay_segments);
-    drawPolygon(renderer, app.polygon, color_delaunay_segments);
+    drawVoronoiEdges(renderer, app.voronoiEdges, {255, 0, 0, 255});
 }
 
 /*
@@ -234,7 +231,7 @@ void construitVoronoi(Application &app)
     // Vider la liste existante de triangles
     app.triangles.clear();
     app.circles.clear();
-    app.polygon.clear();
+    app.voronoiEdges.clear();
 
     // Créer un trés grand triangle (-1000, -1000); (500, 3000); (1500, -1000)
     Triangle bigTriangle = {{-1000, -1000}, {500, 3000}, {1500, -1000}};
@@ -247,8 +244,6 @@ void construitVoronoi(Application &app)
     {
         // Créer une liste de segments LS
         std::vector<Segment> listeSegments;
-        std::vector<Polygon> listePolygones;
-        Polygon polygon;
 
         for (size_t j = 0; j < app.triangles.size(); j++)
         {
@@ -272,9 +267,6 @@ void construitVoronoi(Application &app)
             Circle circle = {{xc, yc}, sqrt(rsqr)};
             app.circles.push_back(circle);
 
-            polygon.points.push_back({(int)xc, (int)yc});
-            app.polygon.push_back(polygon);
-
             if (isCircum)
             {
                 // Récupérer les différents segments de ce triangles dans LS
@@ -289,6 +281,64 @@ void construitVoronoi(Application &app)
                 // Enlever le triangke T de la liste
                 app.triangles.erase(app.triangles.begin() + j);
                 j--;
+            }
+
+            const Triangle &triangle = app.triangles[j];
+
+            for (size_t k = 0; k < app.triangles.size(); k++)
+            {
+                if (k == j)
+                    break;
+
+                const Triangle &adjacentTriangle = app.triangles[k];
+
+                int sharedEdges = 0;
+                if (compareCoords(triangle.p1, adjacentTriangle.p1) ||
+                    compareCoords(triangle.p1, adjacentTriangle.p2) ||
+                    compareCoords(triangle.p1, adjacentTriangle.p3))
+                {
+                    sharedEdges++;
+                }
+                if (compareCoords(triangle.p2, adjacentTriangle.p1) ||
+                    compareCoords(triangle.p2, adjacentTriangle.p2) ||
+                    compareCoords(triangle.p2, adjacentTriangle.p3))
+                {
+                    sharedEdges++;
+                }
+                if (compareCoords(triangle.p3, adjacentTriangle.p1) ||
+                    compareCoords(triangle.p3, adjacentTriangle.p2) ||
+                    compareCoords(triangle.p3, adjacentTriangle.p3))
+                {
+                    sharedEdges++;
+                }
+
+                if (sharedEdges >= 2)
+                {
+                    // Les triangles partagent un segment, donc il y a une arête de Voronoi entre les deux points non partagés
+                    VoronoiEdge voronoiEdge;
+                    if (!compareCoords(triangle.p1, adjacentTriangle.p1) &&
+                        !compareCoords(triangle.p1, adjacentTriangle.p2) &&
+                        !compareCoords(triangle.p1, adjacentTriangle.p3))
+                    {
+                        voronoiEdge.p1 = triangle.p1;
+                        voronoiEdge.p2 = adjacentTriangle.p1;
+                    }
+                    else if (!compareCoords(triangle.p2, adjacentTriangle.p1) &&
+                             !compareCoords(triangle.p2, adjacentTriangle.p2) &&
+                             !compareCoords(triangle.p2, adjacentTriangle.p3))
+                    {
+                        voronoiEdge.p1 = triangle.p2;
+                        voronoiEdge.p2 = adjacentTriangle.p1;
+                    }
+                    else
+                    {
+                        voronoiEdge.p1 = triangle.p3;
+                        voronoiEdge.p2 = adjacentTriangle.p1;
+                    }
+
+                    // Ajouter l'arête de Voronoi à la liste des arêtes
+                    app.voronoiEdges.push_back(voronoiEdge);
+                }
             }
         }
 
