@@ -12,7 +12,7 @@ struct Coords
 {
     int x, y;
 
-    bool operator==(const Coords &other)
+    bool operator==(const Coords &other) const
     {
         return x == other.x and y == other.y;
     }
@@ -29,6 +29,17 @@ struct Triangle
     bool complet = false;
 };
 
+struct Polygon
+{
+    std::vector<Coords> points;
+};
+
+struct Circle
+{
+    Coords center;
+    int radius;
+};
+
 struct Application
 {
     int width, height;
@@ -36,6 +47,12 @@ struct Application
 
     std::vector<Coords> points;
     std::vector<Triangle> triangles;
+    std::vector<Polygon> polygones;
+    std::vector<Circle> circles;
+
+    bool show_delaunay = true;
+    bool show_voronoi = true;
+    bool show_circum = true;
 };
 
 struct Color
@@ -84,6 +101,51 @@ void drawTriangles(SDL_Renderer *renderer, const std::vector<Triangle> &triangle
     }
 }
 
+void drawPolygon(SDL_Renderer *renderer, const std::vector<Polygon> &polygones)
+{
+    for (std::size_t i = 0; i < polygones.size(); i++)
+    {
+        int r, g, b;
+
+        // get rgb color unique based on index
+        r = (i * 119) % 255;
+        g = (i * 7) % 255;
+        b = (i * 13) % 255;
+
+        const Polygon &p = polygones[i];
+
+        std::vector<Sint16> vx;
+        std::vector<Sint16> vy;
+
+        for (std::size_t j = 0; j < p.points.size(); j++)
+        {
+            vx.push_back(p.points[j].x);
+            vy.push_back(p.points[j].y);
+        }
+
+        filledPolygonRGBA(renderer, vx.data(), vy.data(), vx.size(), r, g, b, SDL_ALPHA_OPAQUE);
+    }
+}
+
+void drawCircles(SDL_Renderer *renderer, const std::vector<Circle> &circles, Color color)
+{
+    for (std::size_t i = 0; i < circles.size(); i++)
+    {
+        const Circle &c = circles[i];
+
+        // draw circle of circum of triangle
+
+        // circleRGBA(
+        //     renderer,
+        //     c.center.x, c.center.y,
+        //     c.radius,
+        //     color.r, color.g, color.b, color.a);
+
+        // draw center of the circle
+        filledCircleRGBA(renderer, c.center.x, c.center.y, 3, 255, 0, 0, 255);
+    }
+}
+
 void draw(SDL_Renderer *renderer, const Application &app)
 {
     /* Remplissez cette fonction pour faire l'affichage du jeu */
@@ -94,8 +156,15 @@ void draw(SDL_Renderer *renderer, const Application &app)
     Color color_delaunay_segments = {240, 240, 20, SDL_ALPHA_OPAQUE};
     Color color_delaunay_triangles = {0, 240, 160, SDL_ALPHA_OPAQUE};
 
-    drawPoints(renderer, app.points, color_delaunay_points);
-    drawTriangles(renderer, app.triangles, color_delaunay_triangles);
+    if (app.show_voronoi)
+        drawPolygon(renderer, app.polygones);
+    if (app.show_circum)
+        drawCircles(renderer, app.circles, color_delaunay_segments);
+    if (app.show_delaunay)
+    {
+        drawTriangles(renderer, app.triangles, color_delaunay_triangles);
+        drawPoints(renderer, app.points, color_delaunay_points);
+    }
 }
 
 /*
@@ -169,6 +238,8 @@ void construitVoronoi(Application &app)
 
     // Vider la liste existante de triangles
     app.triangles.clear();
+    app.circles.clear();
+    app.polygones.clear();
 
     // Créer un trés grand triangle (-1000, -1000); (500, 3000); (1500, -1000)
     Triangle bigTriangle = {{-1000, -1000}, {500, 3000}, {1500, -1000}};
@@ -201,6 +272,10 @@ void construitVoronoi(Application &app)
 
             if (isCircum)
             {
+                // draw circle of circum
+                Circle circle = {{(int)xc, (int)yc}, (int)rsqr};
+                app.circles.push_back(circle);
+
                 // Récupérer les différents segments de ce triangles dans LS
                 Segment seg_1 = {{app.triangles[j].p1.x, app.triangles[j].p1.y}, {app.triangles[j].p2.x, app.triangles[j].p2.y}};
                 Segment seg_2 = {{app.triangles[j].p2.x, app.triangles[j].p2.y}, {app.triangles[j].p3.x, app.triangles[j].p3.y}};
@@ -249,6 +324,36 @@ void construitVoronoi(Application &app)
             app.triangles.push_back(triangle);
         }
     }
+
+    // Créer une liste de polygones
+    std::vector<Polygon> polygones;
+
+    for (size_t i = 0; i < app.points.size(); i++)
+    {
+        // Créer un polygone
+        Polygon polygone;
+
+        for (size_t j = 0; j < app.triangles.size(); j++)
+        {
+            // Si le triangle contient le point P (adjacent)
+            if (app.triangles[j].p1 == app.points[i] || app.triangles[j].p2 == app.points[i] || app.triangles[j].p3 == app.points[i])
+            {
+                // Récupérer le centre du cercle circonscrit
+                float xc, yc, rsqr;
+                CircumCircle(app.triangles[j].p1.x, app.triangles[j].p1.y, app.triangles[j].p1.x, app.triangles[j].p1.y, app.triangles[j].p2.x, app.triangles[j].p2.y, app.triangles[j].p3.x, app.triangles[j].p3.y,
+                             &xc, &yc, &rsqr);
+
+                // Ajouter le centre du cercle circonscrit au polygone
+                polygone.points.push_back({(int)xc, (int)yc});
+
+                // Trier les points du polygone par angle croissant
+                std::sort(polygone.points.begin(), polygone.points.end(), compareCoords);
+
+                // Ajouter le polygone à la liste de polygones pour le dessiner
+                app.polygones.push_back(polygone);
+            }
+        }
+    }
 }
 
 bool handleEvent(Application &app)
@@ -257,15 +362,30 @@ bool handleEvent(Application &app)
     SDL_Event e;
     while (SDL_PollEvent(&e))
     {
-        if (e.type == SDL_QUIT)
+        if (e.type == SDL_KEYDOWN)
+        {
+            if (e.key.keysym.sym == SDLK_ESCAPE)
+                return false;
+
+            if (e.key.keysym.sym == SDLK_d) // On D, toggle app.delaunay
+            {
+                app.show_delaunay = !app.show_delaunay;
+            }
+            else if (e.key.keysym.sym == SDLK_c) // On C, toggle app.circum
+            {
+                app.show_circum = !app.show_circum;
+            }
+            else if (e.key.keysym.sym == SDLK_v) // On V, toggle app.polygones
+            {
+                app.show_voronoi = !app.show_voronoi;
+            }
+        }
+        else if (e.type == SDL_QUIT)
             return false;
         else if (e.type == SDL_WINDOWEVENT_RESIZED)
         {
             app.width = e.window.data1;
             app.height = e.window.data1;
-        }
-        else if (e.type == SDL_MOUSEWHEEL)
-        {
         }
         else if (e.type == SDL_MOUSEBUTTONUP)
         {
@@ -274,6 +394,9 @@ bool handleEvent(Application &app)
                 app.focus.x = e.button.x;
                 app.focus.y = e.button.y;
                 app.points.clear();
+                app.triangles.clear();
+                app.polygones.clear();
+                app.circles.clear();
             }
             else if (e.button.button == SDL_BUTTON_LEFT)
             {
@@ -294,7 +417,7 @@ int main(int argc, char **argv)
     bool is_running = true;
 
     // Creation de la fenetre
-    gWindow = init("Awesome Voronoi", 720, 720);
+    gWindow = init("The IMAC Voronoi !", 720, 720);
 
     if (!gWindow)
     {
