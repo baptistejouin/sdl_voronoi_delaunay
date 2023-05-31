@@ -10,8 +10,6 @@ Les containers permettent de stocker des éléments.
 
 C'est un conteneur STL qui est implenté comme une liste à double lien. Il prend en charge l'insertion et la suppression d'élèments n'importe où dans le conteneur.
 
-````
-
 ## vector
 
 C'est un espace de stockage pour une séquence d'éléments. Il contient le nombre d'éléments, le dernier élement et les éléments. C'est quelque chose qui s'empile les uns derrière les autres. Quand on veut stocker quelque chose, par défaut, on prend un vector. Un vector est un template. Il prend une classe en argument. Cela prend le type d'éléments que l'on veut stocker dans le vector (ex: Int, string, et d'une classe).
@@ -22,8 +20,6 @@ Soit normalement avec l'initialisateur list :
 vector <int> v1{1,2,3,4,5};
 ```
 
-
-
 ## deque
 
 Deque signifie en anglais (double ended queue). Il sert à ajouter et supprimer des élèments au début et à la fin de la structure de donnée.
@@ -32,10 +28,14 @@ Deque signifie en anglais (double ended queue). Il sert à ajouter et supprimer 
 
 C'est une table associative qui permet d'associer une clé à une valeur/donnée.
 Map prend deux paramètres :
--  le type de la clé
+
+- le type de la clé
 - le type de la valeur/donnée
-Exemple :
-On associe une map entre un entier (la valeur) et une string (la clé).
-map<int, string> map1
-...
-````
+  Exemple :
+  On associe une map entre un entier (la valeur) et une string (la clé).
+  map<int, string> map1
+  ...
+
+```
+
+```
