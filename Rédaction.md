@@ -125,7 +125,7 @@ std::map<std::string, int> ageProfs;
 
     // Insertion d'éléments dans le map (données purement fictives, toute ressemblance avec des personnes existantes ou ayant existé serait purement fortuite)
     ages["Biri"] = 40;
-    ages["Stevee"] = 28;
+    ages["Stevee"] = 25;
     ages["Cherrier"] = 48;
 
 	// Affichage du map
@@ -140,5 +140,5 @@ std::map<std::string, int> ageProfs;
 	// D'après quelques sondages d'approximation
 	// Biri a envrion 40 ans
 	// Cherrier a envrion 48 ans
-	// Stevee a envrion 28 ans
+	// Stevee a envrion 25 ans
 ```
