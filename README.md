@@ -1,7 +1,9 @@
 # Voroinoi / Delaunay C++
 
 Projet mené dans le cadre du cours d'algorithmie et programmation (école d’ingénieurs IMAC).
-<img width="350" alt="image" src="https://github.com/baptistejouin/sdl_voronoi_delaunay/assets/92529084/c9a3fc10-af20-4268-affa-3f2c7e01dec9">
+<img width="432" alt="image" src="https://github.com/baptistejouin/sdl_voronoi_delaunay/assets/92529084/a991bcd3-687f-43fd-98c2-00ac49919992">
+<img width="432" alt="image" src="https://github.com/baptistejouin/sdl_voronoi_delaunay/assets/92529084/375e12b1-f53f-40e4-a4f4-85dcd3cdb39a">
+
 ## Fonctionalités
 
 ### Base
