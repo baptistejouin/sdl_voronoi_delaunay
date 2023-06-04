@@ -67,6 +67,19 @@ bool compareCoords(Coords point1, Coords point2)
     return point1.y < point2.y;
 }
 
+bool compareAngles(const Coords &center, const Coords &p1, const Coords &p2)
+{
+    float angle1 = atan2(p1.y - center.y, p1.x - center.x);
+    float angle2 = atan2(p2.y - center.y, p2.x - center.x);
+    return angle1 < angle2;
+}
+
+void sortPointsByAngle(const Coords &center, std::vector<Coords> &points)
+{
+    std::sort(points.begin(), points.end(), [&](const Coords &p1, const Coords &p2)
+              { return compareAngles(center, p1, p2); });
+}
+
 void drawPoints(SDL_Renderer *renderer, const std::vector<Coords> &points, Color color)
 {
     for (std::size_t i = 0; i < points.size(); i++)
@@ -347,7 +360,7 @@ void construitVoronoi(Application &app)
                 polygone.points.push_back({(int)xc, (int)yc});
 
                 // Trier les points du polygone par angle croissant
-                std::sort(polygone.points.begin(), polygone.points.end(), compareCoords);
+                sortPointsByAngle(app.points[i], polygone.points);
 
                 // Ajouter le polygone à la liste de polygones pour le dessiner
                 app.polygones.push_back(polygone);
